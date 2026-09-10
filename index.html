@@ -1,15 +1,20 @@
 <!doctype html>
 <html lang="zh-CN">
   <head>
+    <link rel="stylesheet" href="/assets/mars3d-cesium/Widgets/widgets.css" />
+    <script>window.CESIUM_BASE_URL = "/assets/mars3d-cesium/"; localStorage.setItem("bwy-token", "local-replica");</script>
+    <script>if (!["/chat-engine", "/chat-engine/chatting", "/chat-engine/history", "/risk-analysis", "/defense-response", "/task-track"].includes(location.pathname)) history.replaceState({}, "", "/chat-engine");</script>
+    <script src="/assets/mars3d-cesium/Cesium.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#101722" />
-    <title>地象大模型 · 本地复现</title>
-    <link rel="icon" href="./logo.png" />
-    <link rel="stylesheet" href="./styles.css" />
+    <title>地象大模型</title>
+    <script type="module" crossorigin src="/assets/index-B9pFv1aG.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B1RU7MSh.css" />
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app.js"></script>
+    <script src="/heatmap.min.js"></script>
+    <script src="/kriging.js"></script>
+    <script src="/lib/html-docx.js"></script>
   </body>
 </html>

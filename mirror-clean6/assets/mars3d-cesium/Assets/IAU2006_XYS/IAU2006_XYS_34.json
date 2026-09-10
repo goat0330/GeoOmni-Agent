@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" href="/assets/mars3d-cesium/Widgets/widgets.css">
+  <script>window['CESIUM_BASE_URL'] = '/assets/mars3d-cesium/'</script>
+  <script src="/assets/mars3d-cesium/Cesium.js"></script>
+
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/logo.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>地象大模型</title>
+  <script type="module" crossorigin src="/assets/index-B9pFv1aG.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-B1RU7MSh.css">
+</head>
+
+<body>
+  <div id="app"></div>
+  <script src="/heatmap.min.js"></script>
+  <script src="/kriging.js"></script>
+  <script src="/lib/html-docx.js"></script>
+</body>
+
+</html>

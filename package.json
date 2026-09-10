@@ -1,0 +1,9 @@
+{
+  "name": "geo-omni-replica",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node serve.mjs",
+    "collect": "node tools/collect-assets.mjs mirror-clean3"
+  }
+}

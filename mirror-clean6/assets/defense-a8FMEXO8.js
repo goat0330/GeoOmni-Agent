@@ -1,0 +1,1 @@
+import{aQ as n,r as e}from"./index-B9pFv1aG.js";const l=n("defense",()=>{const t=e(""),r=e(""),s=e(null);return{defId:t,handleId:r,defObj:s,resetStore:()=>{r.value="",t.value="",s.value=null}}});export{l as u};

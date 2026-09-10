@@ -1,0 +1,174 @@
+{
+  "tilejson": "2.1.0",
+  "name": "enshi-4326",
+  "description": "",
+  "version": "1.1.0",
+  "format": "quantized-mesh-1.0",
+  "attribution": "",
+  "schema": "tms",
+  "extensions": [],
+  "tiles": [
+    "{z}/{x}/{y}.terrain?v={version}"
+  ],
+  "projection": "EPSG:4326",
+  "bounds": [
+    0.00,
+    -90.00,
+    180.00,
+    90.00
+  ],
+  "available": [
+    [
+      {
+        "startX": 0,
+        "startY": 0,
+        "endX": 1,
+        "endY": 0
+      }
+    ],
+    [
+      {
+        "startX": 3,
+        "startY": 1,
+        "endX": 3,
+        "endY": 1
+      }
+    ],
+    [
+      {
+        "startX": 6,
+        "startY": 2,
+        "endX": 6,
+        "endY": 2
+      }
+    ],
+    [
+      {
+        "startX": 12,
+        "startY": 5,
+        "endX": 12,
+        "endY": 5
+      }
+    ],
+    [
+      {
+        "startX": 25,
+        "startY": 10,
+        "endX": 25,
+        "endY": 10
+      }
+    ],
+    [
+      {
+        "startX": 51,
+        "startY": 21,
+        "endX": 51,
+        "endY": 21
+      }
+    ],
+    [
+      {
+        "startX": 102,
+        "startY": 42,
+        "endX": 103,
+        "endY": 42
+      }
+    ],
+    [
+      {
+        "startX": 205,
+        "startY": 85,
+        "endX": 206,
+        "endY": 85
+      }
+    ],
+    [
+      {
+        "startX": 411,
+        "startY": 170,
+        "endX": 412,
+        "endY": 171
+      }
+    ],
+    [
+      {
+        "startX": 822,
+        "startY": 341,
+        "endX": 824,
+        "endY": 342
+      }
+    ],
+    [
+      {
+        "startX": 1644,
+        "startY": 683,
+        "endX": 1649,
+        "endY": 685
+      }
+    ],
+    [
+      {
+        "startX": 3289,
+        "startY": 1367,
+        "endX": 3298,
+        "endY": 1370
+      }
+    ],
+    [
+      {
+        "startX": 6579,
+        "startY": 2734,
+        "endX": 6597,
+        "endY": 2740
+      }
+    ],
+    [
+      {
+        "startX": 13158,
+        "startY": 5468,
+        "endX": 13195,
+        "endY": 5481
+      }
+    ],
+    [
+      {
+        "startX": 26316,
+        "startY": 10936,
+        "endX": 26391,
+        "endY": 10963
+      }
+    ],
+    [
+      {
+        "startX": 52633,
+        "startY": 21873,
+        "endX": 52782,
+        "endY": 21927
+      }
+    ],
+    [
+      {
+        "startX": 105267,
+        "startY": 43747,
+        "endX": 105565,
+        "endY": 43855
+      }
+    ],
+    [
+      {
+        "startX": 210535,
+        "startY": 87494,
+        "endX": 211131,
+        "endY": 87711
+      }
+    ],
+    [
+      {
+        "startX": 421070,
+        "startY": 174988,
+        "endX": 422263,
+        "endY": 175423
+      }
+    ]
+  ]
+}

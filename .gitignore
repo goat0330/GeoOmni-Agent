@@ -1,0 +1,25 @@
+# Local secrets and runtime files
+.env
+.env.*
+!.env.example
+*.log
+
+# Local dependency and editor folders
+node_modules/
+.vscode/
+.idea/
+
+# Superseded asset captures; the runnable app uses mirror-clean6/
+mirror/
+mirror-clean/
+mirror-clean2/
+mirror-clean3/
+mirror-clean4/
+mirror-clean5/
+
+# Local collection metadata contains the private source URL
+mirror-clean6/asset-manifest.json
+
+# Local test output
+coverage/
+tmp/

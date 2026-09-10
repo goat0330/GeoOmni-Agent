@@ -110,7 +110,7 @@ test("runtime hardening provides health, request IDs, rate limit, error redactio
       CHAT_RATE_LIMIT_PER_MINUTE: "1",
       ALLOW_SOURCE_PROXY: "false"
     },
-    stdio: ["ignore", "pipe", "pipe", "ipc"]
+    stdio: ["ignore", "pipe", "pipe", ...(process.platform === "win32" ? ["ipc"] : [])]
   });
 
   let stdout = "";

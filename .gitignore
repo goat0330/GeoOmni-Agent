@@ -23,3 +23,9 @@ mirror-clean6/asset-manifest.json
 # Local test output
 coverage/
 tmp/
+
+# Enterprise overlay local backup/runtime artifacts
+serve.mjs.pre-enterprise.bak
+.enterprise-backup/
+
+.enterprise-local.json

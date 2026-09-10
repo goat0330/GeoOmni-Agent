@@ -1,0 +1,30 @@
+GeoOmni-Agent Enterprise Overlay v1 - Validation Report
+=======================================================
+Date: 2026-09-10
+GitHub baseline: goat0330/GeoOmni-Agent master @ ef6733a0236fc446ef93ff5a352fb7b838945e38
+
+Validated against current master anchors:
+- const sourceOrigin configuration line
+- readBody 1 MiB guard
+- proxySourceMapAsset implementation
+- createServer/server.listen tail
+
+Local package validation:
+- Node syntax checks: PASS (all .mjs files)
+- Unit tests: PASS
+- Runtime hardening integration test: PASS
+- Windows CRLF patch compatibility: PASS
+- Idempotent patch + backup test: PASS
+- Production error redaction: PASS
+- Request ID + structured request logging: PASS
+- Chat rate limiting: PASS
+- /healthz + /readyz: PASS
+- SIGTERM graceful shutdown: PASS
+- Docker Compose YAML parse: PASS
+- GitHub Actions YAML parse: PASS
+- Nginx configuration syntax: PASS
+- SSE proxy buffering disabled in Nginx: VERIFIED BY CONFIG
+- Overlay contains no real DeepSeek API key: PASS
+
+Important scope note:
+The validation environment cannot clone GitHub binaries/assets directly, so the complete mirror-clean6 UI bundle was not launched inside this sandbox. The included smoke test is designed to run after overlaying the package onto the user's complete local repository, and GitHub Actions runs the same four-route/API/SSE regression against a full checkout.

@@ -2,8 +2,18 @@
   "name": "geo-omni-replica",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20.10"
+  },
   "scripts": {
+    "enterprise:apply": "node tools/apply-enterprise-hardening.mjs",
+    "enterprise:check": "node tools/apply-enterprise-hardening.mjs --check",
+    "prestart": "node tools/apply-enterprise-hardening.mjs",
     "start": "node serve.mjs",
+    "pretest": "node tools/apply-enterprise-hardening.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "smoke": "node scripts/smoke-test.mjs",
+    "audit:static": "node scripts/static-audit.mjs",
     "collect": "node tools/collect-assets.mjs mirror-clean3"
   }
 }

@@ -16,7 +16,35 @@ const nativeRoutes = new Set([
   "/defense-response",
   "/task-track"
 ]);
-const sourceOrigin = "https://172.16.41.60:8080";
+// GEOOMNI_ENTERPRISE_HARDENING_V1
+const runtimeEnvironment = process.env.NODE_ENV || "development";
+const isProduction = runtimeEnvironment === "production";
+function envNumber(name, fallback, minimum) {
+  const parsed = Number(process.env[name]);
+  return Number.isFinite(parsed) && parsed >= minimum ? parsed : fallback;
+}
+let localRuntimeConfig = {};
+if (!isProduction) {
+  try {
+    localRuntimeConfig = JSON.parse(await readFile(path.join(root, ".enterprise-local.json"), "utf8"));
+  } catch {
+    localRuntimeConfig = {};
+  }
+}
+const sourceOrigin = (process.env.SOURCE_ORIGIN || localRuntimeConfig.sourceOrigin || "").replace(/\/$/, "");
+const allowSourceProxy = process.env.ALLOW_SOURCE_PROXY == null
+  ? (!isProduction && localRuntimeConfig.allowSourceProxy === true && Boolean(sourceOrigin))
+  : /^(1|true|yes)$/i.test(process.env.ALLOW_SOURCE_PROXY || "");
+const sourceTlsVerify = process.env.SOURCE_TLS_VERIFY == null
+  ? (localRuntimeConfig.sourceTlsVerify !== false)
+  : !/^(0|false|no)$/i.test(process.env.SOURCE_TLS_VERIFY || "");
+const trustProxy = /^(1|true|yes)$/i.test(process.env.TRUST_PROXY || "");
+const requestBodyLimitBytes = envNumber("REQUEST_BODY_LIMIT_BYTES", 1024 * 1024, 1024);
+const chatRateLimitPerMinute = envNumber("CHAT_RATE_LIMIT_PER_MINUTE", 60, 1);
+const requestTimeoutMs = envNumber("REQUEST_TIMEOUT_MS", 120000, 1000);
+const headersTimeoutMs = envNumber("HEADERS_TIMEOUT_MS", 65000, 1000);
+const keepAliveTimeoutMs = envNumber("KEEP_ALIVE_TIMEOUT_MS", 5000, 1000);
+const shutdownTimeoutMs = envNumber("SHUTDOWN_TIMEOUT_MS", 10000, 1000);
 const deepSeekApiKey = process.env.DEEPSEEK_API_KEY || "";
 const deepSeekBaseUrl = (process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
 const deepSeekModel = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
@@ -184,7 +212,7 @@ async function readBody(req) {
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 1024 * 1024) throw new Error("request body too large");
+    if (size > requestBodyLimitBytes) throw new Error("request body too large");
     chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString("utf8");
@@ -573,8 +601,12 @@ function isSourceMapAsset(url) {
 
 function proxySourceMapAsset(res, url) {
   if (!isSourceMapAsset(url)) return false;
+  if (!allowSourceProxy || !sourceOrigin) {
+    sendJson(res, { code: 404, message: "map asset unavailable locally; source proxy disabled" }, 404);
+    return true;
+  }
   const upstreamUrl = `${sourceOrigin}${url.pathname}${url.search}`;
-  const request = https.get(upstreamUrl, { rejectUnauthorized: false }, upstream => {
+  const request = https.get(upstreamUrl, { rejectUnauthorized: sourceTlsVerify }, upstream => {
     if (debugAssets) console.log(`map proxy: ${url.pathname} -> ${upstream.statusCode || 0}`);
     const headers = { "Cache-Control": "no-store" };
     if (upstream.headers["content-type"]) headers["Content-Type"] = upstream.headers["content-type"];
@@ -618,16 +650,138 @@ async function serveStatic(req, res, url) {
   }
 }
 
+let requestSequence = 0;
+const chatRateBuckets = new Map();
+const startedAt = Date.now();
+
+function logEvent(level, event, fields = {}) {
+  const record = { timestamp: new Date().toISOString(), level, event, ...fields };
+  const line = JSON.stringify(record);
+  if (level === "error") console.error(line);
+  else if (level === "warn") console.warn(line);
+  else console.log(line);
+}
+
+function requestIdFor(req) {
+  const supplied = req.headers["x-request-id"];
+  if (typeof supplied === "string" && /^[A-Za-z0-9._:-]{1,128}$/.test(supplied)) return supplied;
+  requestSequence = (requestSequence + 1) % 1000000000;
+  return `geo-${Date.now().toString(36)}-${process.pid}-${requestSequence.toString(36)}`;
+}
+
+function clientIp(req) {
+  if (trustProxy) {
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string" && forwarded.trim()) return forwarded.split(",")[0].trim();
+  }
+  return req.socket.remoteAddress || "unknown";
+}
+
+function chatRateLimited(req) {
+  const minute = Math.floor(Date.now() / 60000);
+  const key = `${clientIp(req)}:${minute}`;
+  const count = (chatRateBuckets.get(key) || 0) + 1;
+  chatRateBuckets.set(key, count);
+  if (chatRateBuckets.size > 10000) chatRateBuckets.clear();
+  return count > chatRateLimitPerMinute;
+}
+
+async function handleHealth(res, ready = false) {
+  if (!ready) {
+    sendJson(res, { status: "ok", uptimeSeconds: Math.floor((Date.now() - startedAt) / 1000) });
+    return;
+  }
+  try {
+    knowledgeChunksPromise ||= loadKnowledgeChunks();
+    const chunks = await knowledgeChunksPromise;
+    if (!chunks.length) {
+      sendJson(res, { status: "not-ready", reason: "knowledge-base-empty" }, 503);
+      return;
+    }
+    sendJson(res, { status: "ready", knowledgeChunks: chunks.length });
+  } catch {
+    sendJson(res, { status: "not-ready" }, 503);
+  }
+}
+
 const server = createServer(async (req, res) => {
+  const requestId = requestIdFor(req);
+  const requestStarted = Date.now();
+  res.setHeader("X-Request-Id", requestId);
+  res.on("finish", () => {
+    let pathname = "/";
+    try { pathname = new URL(req.url || "/", "http://local").pathname; } catch {}
+    logEvent("info", "http_request", {
+      requestId,
+      method: req.method || "GET",
+      path: pathname,
+      status: res.statusCode,
+      durationMs: Date.now() - requestStarted
+    });
+  });
+
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host || `${host}:${port}`}`);
+    if (url.pathname === "/healthz") return await handleHealth(res, false);
+    if (url.pathname === "/readyz") return await handleHealth(res, true);
+    if (req.method === "POST" && url.pathname === "/api/dizai/ai/agent/chat" && chatRateLimited(req)) {
+      res.setHeader("Retry-After", "60");
+      return sendJson(res, { code: 429, message: "Too Many Requests", requestId }, 429);
+    }
     if (url.pathname.startsWith("/api/")) return await handleApi(req, res, url);
     return await serveStatic(req, res, url);
   } catch (error) {
-    sendJson(res, { code: 500, message: String(error.message || error) }, 500);
+    logEvent("error", "request_failed", { requestId, message: String(error?.message || error) });
+    if (res.headersSent) {
+      if (!res.destroyed) res.end();
+      return;
+    }
+    sendJson(res, {
+      code: 500,
+      message: isProduction ? "Internal Server Error" : String(error?.message || error),
+      requestId
+    }, 500);
   }
 });
 
+server.requestTimeout = requestTimeoutMs;
+server.headersTimeout = headersTimeoutMs;
+server.keepAliveTimeout = keepAliveTimeoutMs;
+
 server.listen(port, host, () => {
-  console.log(`GeoOmni local replica: http://${host}:${port}/chat-engine`);
+  logEvent("info", "server_started", {
+    host,
+    port,
+    environment: runtimeEnvironment,
+    sourceProxyEnabled: allowSourceProxy && Boolean(sourceOrigin),
+    sourceTlsVerify,
+    chatRateLimitPerMinute
+  });
+  console.log(`GeoOmni local replica: http://${host}:${port}/chat-engine/chatting`);
 });
+
+let shuttingDown = false;
+function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  logEvent("info", "shutdown_started", { signal });
+  const timer = setTimeout(() => {
+    logEvent("error", "shutdown_timeout", { timeoutMs: shutdownTimeoutMs });
+    process.exit(1);
+  }, shutdownTimeoutMs);
+  timer.unref();
+
+  server.close(error => {
+    clearTimeout(timer);
+    if (error) {
+      logEvent("error", "shutdown_failed", { message: String(error.message || error) });
+      process.exitCode = 1;
+    } else {
+      logEvent("info", "shutdown_complete");
+    }
+  });
+  server.closeIdleConnections?.();
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

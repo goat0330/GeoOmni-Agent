@@ -1,0 +1,31 @@
+GeoOmni-Agent Enterprise Overlay v1
+====================================
+
+覆盖现有文件：
+- package.json
+- .gitignore
+
+新增文件：
+- .env.example
+- .dockerignore
+- Dockerfile
+- docker-compose.yml
+- install-enterprise.ps1
+- rollback-enterprise.ps1
+- README-ENTERPRISE.md
+- deploy/nginx.conf
+- deploy/nginx-https.example.conf
+- tools/apply-enterprise-hardening.mjs
+- scripts/healthcheck.mjs
+- scripts/static-audit.mjs
+- scripts/smoke-test.mjs
+- tests/enterprise-hardening.test.mjs
+- tests/runtime-hardening.test.mjs
+- .github/workflows/enterprise-ci.yml
+
+运行 install-enterprise.ps1 后自动修改：
+- serve.mjs
+
+首次修改前自动备份/迁移：
+- serve.mjs.pre-enterprise.bak
+- .enterprise-local.json（本地开发回源配置，Git/Docker 忽略）

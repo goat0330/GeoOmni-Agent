@@ -1,0 +1,65 @@
+name: enterprise-ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply enterprise hardening
+        run: node tools/apply-enterprise-hardening.mjs --no-backup --no-local-fallback
+
+      - name: Syntax check
+        run: node --check serve.mjs
+
+      - name: Unit tests
+        run: node --test tests/*.test.mjs
+
+      - name: Static audit
+        run: node scripts/static-audit.mjs
+
+      - name: Start application
+        run: |
+          NODE_ENV=production \
+          HOST=127.0.0.1 \
+          PORT=4173 \
+          ALLOW_SOURCE_PROXY=false \
+          node serve.mjs > /tmp/geo-omni.log 2>&1 &
+          echo $! > /tmp/geo-omni.pid
+
+      - name: Wait for readiness
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/readyz >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/geo-omni.log
+          exit 1
+
+      - name: Smoke regression
+        run: node scripts/smoke-test.mjs
+
+      - name: Print server log on failure
+        if: failure()
+        run: cat /tmp/geo-omni.log || true
+
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -f /tmp/geo-omni.pid ]; then
+            kill -TERM "$(cat /tmp/geo-omni.pid)" || true
+          fi

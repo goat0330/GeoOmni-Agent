@@ -51,6 +51,7 @@ const deepSeekModel = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
 const deepSeekThinking = process.env.DEEPSEEK_THINKING || "disabled";
 const knowledgePaths = ["knowledge-base.md", "api-contracts.md", "README.md"];
 let knowledgeChunksPromise;
+const chatConversations = new Map();
 
 const localTownRows = [
   "白杨坪镇", "崔家坝镇", "板桥镇", "新塘乡", "七里坪街道", "屯堡乡",
@@ -287,6 +288,28 @@ function extractChatQuery(body) {
   return String(value || "请介绍当前页面").trim().slice(0, 8000);
 }
 
+function normalizeChatContent(value) {
+  if (typeof value === "string") return value.trim().slice(0, 4000);
+  if (Array.isArray(value)) {
+    return value.map(part => typeof part === "string" ? part : part?.text || "").join("").trim().slice(0, 4000);
+  }
+  return "";
+}
+
+function extractConversationHistory(body) {
+  if (!Array.isArray(body.messages)) return [];
+  return body.messages
+    .filter(item => item && (item.role === "user" || item.role === "assistant"))
+    .map(item => ({ role: item.role, content: normalizeChatContent(item.content) }))
+    .filter(item => item.content)
+    .slice(-8);
+}
+
+function getConversationId(body) {
+  const supplied = typeof body.conversationId === "string" ? body.conversationId.trim() : "";
+  return (supplied || `local-conversation-${Date.now().toString(36)}`).slice(0, 120);
+}
+
 function writeSseHeaders(res) {
   res.writeHead(200, {
     "Content-Type": "text/event-stream; charset=utf-8",
@@ -330,28 +353,28 @@ function deepSeekContent(choice) {
   return "";
 }
 
-function buildDeepSeekPrompt(query, refs) {
+function buildDeepSeekSystemPrompt(refs) {
   const context = refs.map((ref, index) => `资料 ${index + 1}｜${ref.title}\n${ref.content}`).join("\n\n");
   return [
     "你是地象大模型的智能助手。请用简洁、清晰的中文回答用户问题。",
     "回答前必须优先使用本地资料库中的资料；资料没有覆盖的内容要明确说资料不足，不要编造事实。",
     "涉及地质灾害防御、响应等级、人员转移或现场处置时，只能给辅助参考，并提醒以专业人员和正式制度为准。",
-    `本地资料库检索结果：\n${context || "本次没有命中资料。"}`,
-    `用户问题：${query}`
+    `本地资料库检索结果：\n${context || "本次没有命中资料。"}`
   ].join("\n\n");
 }
 
-function sendWorkflowFinished(res, messageId, status = "succeeded") {
+function sendWorkflowFinished(res, messageId, status = "succeeded", conversationId = "") {
   writeSse(res, {
     eventType: "WORKFLOW_FINISHED",
     message_id: messageId,
+    conversation_id: conversationId,
     answer: "",
     data: { status }
   });
   finishSse(res);
 }
 
-async function streamDeepSeekAnswer(req, res, query, refs, messageId) {
+async function streamDeepSeekAnswer(req, res, query, refs, history, messageId, conversationId) {
   const controller = new AbortController();
   const abort = () => controller.abort();
   req.on("close", abort);
@@ -360,7 +383,11 @@ async function streamDeepSeekAnswer(req, res, query, refs, messageId) {
     const thinking = deepSeekThinking.toLowerCase();
     const requestBody = {
       model: deepSeekModel,
-      messages: [{ role: "user", content: buildDeepSeekPrompt(query, refs) }],
+      messages: [
+        { role: "system", content: buildDeepSeekSystemPrompt(refs) },
+        ...history,
+        { role: "user", content: query }
+      ],
       stream: true
     };
     if (thinking === "enabled" || thinking === "disabled") requestBody.thinking = { type: thinking };
@@ -377,12 +404,13 @@ async function streamDeepSeekAnswer(req, res, query, refs, messageId) {
 
     if (!upstream.ok || !upstream.body) {
       writeSse(res, { eventType: "MESSAGE", message_id: messageId, answer: "</think>" });
-      sendWorkflowFinished(res, messageId, "failed");
+      sendWorkflowFinished(res, messageId, "failed", conversationId);
       return;
     }
 
     let pending = "";
     let emittedContent = false;
+    let generatedAnswer = "";
     let thinkingClosed = false;
     const closeThinking = () => {
       if (thinkingClosed || res.destroyed) return;
@@ -402,6 +430,7 @@ async function streamDeepSeekAnswer(req, res, query, refs, messageId) {
       if (content) {
         closeThinking();
         emittedContent = true;
+        generatedAnswer += content;
         writeSse(res, { eventType: "MESSAGE", message_id: messageId, answer: content });
       }
       return false;
@@ -420,12 +449,14 @@ async function streamDeepSeekAnswer(req, res, query, refs, messageId) {
       closeThinking();
       writeSse(res, { eventType: "MESSAGE", message_id: messageId, answer: "模型未返回可显示内容。" });
     }
-    sendWorkflowFinished(res, messageId);
+    sendWorkflowFinished(res, messageId, "succeeded", conversationId);
+    return generatedAnswer;
   } catch (error) {
     if (!res.destroyed && error?.name !== "AbortError") {
       writeSse(res, { eventType: "MESSAGE", message_id: messageId, answer: "</think>" });
-      sendWorkflowFinished(res, messageId, "failed");
+      sendWorkflowFinished(res, messageId, "failed", conversationId);
     }
+    return "";
   } finally {
     req.off("close", abort);
   }
@@ -434,6 +465,9 @@ async function streamDeepSeekAnswer(req, res, query, refs, messageId) {
 async function handleChat(req, res) {
   const body = parseChatBody(await readBody(req));
   const query = extractChatQuery(body);
+  const conversationId = getConversationId(body);
+  const stored = chatConversations.get(conversationId);
+  const history = stored?.messages?.length ? stored.messages.slice(-8) : extractConversationHistory(body);
   const refs = await searchKnowledge(query);
   const messageId = `local-${Date.now().toString(36)}`;
   writeSseHeaders(res);
@@ -464,11 +498,16 @@ async function handleChat(req, res) {
       writeSse(res, { eventType: "MESSAGE", message_id: messageId, answer: piece });
       await new Promise(resolve => setTimeout(resolve, 24));
     }
-    sendWorkflowFinished(res, messageId);
+    const answer = buildLocalAnswer(query, refs);
+    chatConversations.set(conversationId, { messages: [...history, { role: "user", content: query }, { role: "assistant", content: answer }].slice(-8) });
+    sendWorkflowFinished(res, messageId, "succeeded", conversationId);
     return;
   }
 
-  await streamDeepSeekAnswer(req, res, query, refs, messageId);
+  const answer = await streamDeepSeekAnswer(req, res, query, refs, history, messageId, conversationId);
+  if (answer) {
+    chatConversations.set(conversationId, { messages: [...history, { role: "user", content: query }, { role: "assistant", content: answer }].slice(-8) });
+  }
 }
 
 async function handleApi(req, res, url) {

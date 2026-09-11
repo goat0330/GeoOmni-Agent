@@ -574,6 +574,7 @@ async function handleApi(req, res, url) {
 
 function safeFile(urlPath) {
   const decoded = decodeURIComponent(urlPath.split("?")[0]);
+  if (!["/", "/index.html", "/native.html"].includes(decoded)) return null;
   if (decoded.includes("\0")) return null;
   const candidate = path.resolve(root, `.${decoded || "/index.html"}`);
   const rootPrefix = `${path.resolve(root)}${path.sep}`;

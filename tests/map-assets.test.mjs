@@ -44,6 +44,18 @@ test("production serves bundled terrain before considering source proxy", async 
     assert.equal(terrain.status, 200);
     assert.equal(terrain.headers.get("content-encoding"), "gzip");
     assert.ok((await terrain.arrayBuffer()).byteLength > 0);
+
+    for (const pathname of [
+      "/serve.mjs",
+      "/package.json",
+      "/.enterprise-local.json",
+      "/README.md",
+      "/MapResource/%2e%2e/%2e%2e/serve.mjs"
+    ]) {
+      const response = await fetch(`${base}${pathname}`);
+      assert.equal(response.status, 400, `private root file exposed at ${pathname}`);
+      assert.doesNotMatch(await response.text(), /createServer|DEEPSEEK_API_KEY|sourceOrigin/);
+    }
   } finally {
     child.kill("SIGTERM");
     await new Promise(resolve => child.once("exit", resolve));

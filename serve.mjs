@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import https from "node:https";
+import { existsSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -640,6 +641,8 @@ function isSourceMapAsset(url) {
 
 function proxySourceMapAsset(res, url) {
   if (!isSourceMapAsset(url)) return false;
+  const localAsset = aliasedFile(url.pathname);
+  if (localAsset && existsSync(localAsset)) return false;
   if (!allowSourceProxy || !sourceOrigin) {
     sendJson(res, { code: 404, message: "map asset unavailable locally; source proxy disabled" }, 404);
     return true;

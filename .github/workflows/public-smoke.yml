@@ -1,0 +1,27 @@
+name: public-smoke
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-smoke-master
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_URL: ${{ vars.PUBLIC_BASE_URL || 'https://geo-omni-agent.onrender.com' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run public smoke
+        run: node scripts/public-smoke-test.mjs

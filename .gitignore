@@ -32,3 +32,6 @@ serve.mjs.pre-enterprise.bak
 
 # GeoOmni Design System local backup
 .design-system-backup/
+
+# GeoOmni Meeting Suite local backup
+.meeting-suite-backup/

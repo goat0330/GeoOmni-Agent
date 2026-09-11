@@ -131,6 +131,8 @@ GeoOmni 新增业务 UI 默认使用 **浅色、克制、政务行业系统** �
 - Text：透明背景；
 - 默认 36px 高，紧凑场景 32px；
 - 不自行定义字体、圆角、颜色。
+- 对比度是硬规则：任何深色或主色背景上的文字必须使用 `--geo-text-on-primary`（白色），禁止继承深色正文色；提交前至少检查默认态和 hover/focus 态的实际文字颜色。
+- 如果宿主编译 CSS 覆盖了主按钮文字色，只能在 `theme-bridge.css` 增加组件根节点下的窄作用域兼容规则，不能让深色底黑字进入 Golden Reference。
 
 ## 7. Element Plus 与 GeoOmni 的关系
 

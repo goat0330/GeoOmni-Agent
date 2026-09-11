@@ -1,0 +1,106 @@
+GeoOmni-Agent Meeting Suite Overlay v2 - Validation Report
+==========================================================
+Date: 2026-09-11
+
+Source baselines
+----------------
+Primary delivery base:
+  goat0330/GeoOmni-Agent
+  master @ 923fc85d306459799be9f87f5ec78aef81a4c27f
+  message: fix: align defense response expert flow
+
+Feature reference:
+  goat0330/GeoOmni-Meeting-Minutes
+  master @ 49f9114a863c183937fb122bb230f5d1a3af1181
+  message: 发布地象大模型会议纪要原型
+
+Final product state validated
+-----------------------------
+1. The obsolete intermediate meeting screen is removed from the meeting path:
+   expert library -> collaborative response-plan / level-confirmation screen -> join
+   is NOT used by v2.
+2. The required path is:
+   expert library -> 确认邀请 -> device join -> 应急会商室.
+3. The expert-library dialog receives one inline required meeting-topic row.
+4. Pre-meeting Smart Minutes opens directly on the right and uses empty/live states
+   instead of generating fake final minutes before the meeting starts.
+5. The device join step contains camera preview, microphone selection and camera selection.
+6. The emergency meeting room starts with Smart Minutes closed.
+7. Clicking the room's Smart Minutes button opens the same reusable right sidebar.
+8. The final sidebar contains:
+   - meeting overview
+   - risk assessment summary
+   - recommendations
+   - responsibility items
+   - edit minutes
+   - send to responsible person
+9. Only “结束会议” creates a final history record. “离开会议” does not create one.
+10. Meeting history contains base information, final minutes and distribution state.
+
+Design System alignment
+-----------------------
+- meeting-feature/meeting-suite.css starts with @geo-design-enforce.
+- New Meeting Suite UI consumes existing --geo-* tokens.
+- Existing .geo-ui-* primitives are reused for buttons, inputs, selects, textareas and checkboxes.
+- No raw hex / rgb / hsl colors are present in enforced Meeting Suite CSS.
+- No arbitrary pixel border-radius values are present in enforced Meeting Suite CSS.
+- No second font-family stack is introduced.
+- mirror-clean6 compiled front-end assets remain untouched.
+
+Integration behavior
+--------------------
+- Original expertsCard list/search/pagination/invitation remains authoritative.
+- “进入会商室” is normalized to “确认邀请”.
+- “结束会话” is normalized to “取消”; the cancel action no longer invokes meeting-end semantics.
+- Topic is persisted to meetingContext before entering device selection.
+- Existing server participants are hydrated before creating a fallback meeting, preventing
+  selected invitees from being discarded when a native active meeting id is unavailable.
+- v1 -> v2 upgrade removes the old v1 AGENTS contract and installs the v2 contract.
+
+Automated validation
+--------------------
+- Generated Node/browser JS syntax: PASS
+- Meeting Suite tests: 8/8 PASS
+- Meeting Suite audit: PASS
+- Fresh install against current-repo-shaped anchors: PASS
+- Installer check mode: PASS
+- Second install byte-stable / idempotent: PASS
+- Full rollback to pre-install files: PASS
+- Windows CRLF preservation: PASS
+- v1 -> v2 upgrade path: PASS
+- v1 AGENTS contract removal during upgrade: PASS
+- Static /meeting-feature JS/CSS serving: PASS
+- Static /meeting-history serving: PASS
+- /api/dizai/meeting/currentContext: PASS
+- /api/dizai/meeting/history list: PASS
+- meeting:smoke: PASS
+- “离开会议” does not archive: PASS
+- “结束会议” auto-archives: PASS
+- Secret / raw mobile-number scan in Meeting Suite payload: PASS
+
+Scope note
+----------
+The package does not modify the minified Vue bundle, so the last acceptance step must be
+performed against the user's complete local GeoOmni-Agent assets. The code path, API path,
+installer, upgrade path, rollback path and Design-System policy were loop-tested in a clean
+repo-shaped fixture using the exact current integration anchors.
+
+Required local acceptance after overlay
+---------------------------------------
+1. /defense-response -> open the existing expert library.
+2. Confirm inline 会商主题 + 智能纪要 + 历史会议 appear.
+3. Invite an expert and confirm the selected list remains the original component.
+4. Click 确认邀请.
+5. Confirm the next UI is immediately 加入会议 with camera/microphone selection.
+6. Confirm the removed 协同编辑 / 响应等级确认 screen never appears.
+7. Click 加入会议 -> enter 应急会商室.
+8. Confirm Smart Minutes is initially closed.
+9. Click 智能纪要 -> right sidebar opens and matches the GeoOmni Design System.
+10. Edit/save minutes and test send-to-responsible-person.
+11. Click 结束会议 -> /meeting-history contains the final record.
+12. Run:
+    npm run meeting:smoke
+    npm run meeting:test
+    npm run meeting:audit
+    npm run design:audit
+    npm run smoke

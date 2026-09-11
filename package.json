@@ -18,6 +18,11 @@
     "design:apply": "node tools/apply-design-system.mjs",
     "design:check": "node tools/apply-design-system.mjs --check",
     "design:audit": "node scripts/design-system-audit.mjs",
-    "design:test": "node --test tests/design-system.test.mjs"
+    "design:test": "node --test tests/design-system.test.mjs",
+    "meeting:apply": "node tools/apply-meeting-suite.mjs",
+    "meeting:check": "node tools/apply-meeting-suite.mjs --check",
+    "meeting:test": "node --test tests/meeting-suite.test.mjs",
+    "meeting:audit": "node scripts/meeting-suite-audit.mjs",
+    "meeting:smoke": "node scripts/meeting-suite-smoke.mjs"
   }
 }

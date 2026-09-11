@@ -57,3 +57,12 @@
   background: var(--geo-bg-surface) !important;
   color: var(--geo-text-regular) !important;
 }
+
+/* Legacy compatibility: primary meeting actions must never inherit dark text
+ * from the compiled host app when they use a dark/blue surface.
+ */
+#geo-meeting-suite-root .geo-ui-button--primary,
+#geo-meeting-suite-root .geo-ui-button--primary:hover,
+#geo-meeting-suite-root .geo-ui-button--primary:focus-visible {
+  color: var(--geo-text-on-primary) !important;
+}

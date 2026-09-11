@@ -3,7 +3,7 @@
   <head>
     <link rel="stylesheet" href="/assets/mars3d-cesium/Widgets/widgets.css" />
     <script>window.CESIUM_BASE_URL = "/assets/mars3d-cesium/"; localStorage.setItem("bwy-token", "local-replica");</script>
-    <script>if (!["/chat-engine", "/chat-engine/chatting", "/chat-engine/history", "/risk-analysis", "/defense-response", "/task-track"].includes(location.pathname)) history.replaceState({}, "", "/chat-engine/chatting");</script>
+    <script>if (!["/chat-engine", "/chat-engine/chatting", "/chat-engine/history", "/risk-analysis", "/defense-response", "/task-track", "/meeting-history"].includes(location.pathname)) history.replaceState({}, "", "/chat-engine/chatting");</script>
     <script src="/assets/mars3d-cesium/Cesium.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,11 +11,13 @@
     <script type="module" crossorigin src="/assets/index-B9pFv1aG.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-B1RU7MSh.css" />
     <link rel="stylesheet" href="/design-system/index.css" />
+    <link rel="stylesheet" href="/meeting-feature/meeting-suite.css" />
   </head>
   <body>
     <div id="app"></div>
     <script src="/heatmap.min.js"></script>
     <script src="/kriging.js"></script>
     <script src="/lib/html-docx.js"></script>
+      <script src="/meeting-feature/meeting-suite.js"></script>
   </body>
 </html>

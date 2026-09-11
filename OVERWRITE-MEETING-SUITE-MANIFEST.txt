@@ -1,0 +1,41 @@
+GeoOmni-Agent Meeting Suite Overlay v2
+======================================
+
+NEW / REPLACED PAYLOAD FILES
+- meeting-feature/meeting-suite.js
+- meeting-feature/meeting-suite.css
+- meeting-feature/history.html
+- tools/apply-meeting-suite.mjs
+- tools/rollback-meeting-suite.mjs
+- scripts/meeting-suite-audit.mjs
+- scripts/meeting-suite-smoke.mjs
+- tests/meeting-suite.test.mjs
+- templates/AGENTS.meeting-suite.snippet.md
+- install-meeting-suite.ps1
+- rollback-meeting-suite.ps1
+- README-MEETING-SUITE.md
+- INSTALL-QUICKSTART.txt
+- VALIDATION-MEETING-SUITE.txt
+
+INSTALLER PATCHES (idempotent + backed up)
+- index.html
+- native.html
+- serve.mjs
+- package.json
+- .gitignore
+- AGENTS.md
+
+UNCHANGED
+- mirror-clean6/**
+- design-system/**
+- original compiled expertsCard assets
+- app.js
+- prototype.js
+- prototype.css
+- styles.css
+- enterprise / Docker / Render / DeepSeek / RAG architecture
+
+PRODUCT FLOW CHANGE
+- Removes the old collaborative-confirmation / response-level screen from the meeting path.
+- Expert library confirm -> device join -> final emergency meeting room.
+- One Smart Minutes component is reused for pre-meeting and live meeting.

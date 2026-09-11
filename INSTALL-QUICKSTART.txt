@@ -1,0 +1,36 @@
+GeoOmni Meeting Suite v2 - Quick Start
+======================================
+
+FINAL FLOW
+----------
+Expert library -> Confirm invitation -> Device preview -> Join meeting
+-> Emergency meeting room -> Smart minutes sidebar -> End meeting -> History
+
+The removed collaborative-confirmation / response-level page is NOT in this flow.
+
+INSTALL
+-------
+1. Stop the current GeoOmni-Agent local server.
+2. Extract ALL files in this ZIP into the GeoOmni-Agent repository root.
+3. Run in PowerShell:
+
+   .\install-meeting-suite.ps1
+   npm start
+
+4. Open:
+   http://127.0.0.1:4173/defense-response
+
+5. Final checks in another terminal:
+   npm run meeting:smoke
+   npm run meeting:test
+   npm run meeting:audit
+   npm run design:audit
+   npm run smoke
+
+HISTORY
+-------
+http://127.0.0.1:4173/meeting-history
+
+ROLLBACK
+--------
+.\rollback-meeting-suite.ps1

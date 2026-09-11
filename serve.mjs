@@ -15,7 +15,8 @@ const nativeRoutes = new Set([
   "/chat-engine/history",
   "/risk-analysis",
   "/defense-response",
-  "/task-track"
+  "/task-track",
+  "/meeting-history"
 ]);
 // GEOOMNI_ENTERPRISE_HARDENING_V1
 const runtimeEnvironment = process.env.NODE_ENV || "development";
@@ -82,6 +83,11 @@ const localExpertRows = localExpertRoles.flatMap(role => Array.from({ length: ro
 
 let localActiveMeetingId = "";
 let localMeetingParticipants = [];
+// GEOOMNI_MEETING_SUITE_V1
+// GEOOMNI_MEETING_SUITE_V2
+let localMeetingDraftContext = null;
+let localMeetingContext = null;
+const localMeetingRecords = [];
 
 const localPlanContent = String.raw`<h2>气象预警类区域防御响应方案</h2>
 <h3>一、基本信息</h3>
@@ -419,6 +425,61 @@ function localParticipantsMap() {
   return Object.fromEntries(localMeetingParticipants.map(userId => [String(userId), { userId }]));
 }
 
+function normalizeMeetingSubject(value) {
+  return String(value || "").replace(/\s+/g, " ").trim().slice(0, 80) || "未命名会商";
+}
+
+function defaultMinutesForMeeting(context = {}) {
+  const subject = normalizeMeetingSubject(context.subject);
+  return {
+    summary: `本次会商围绕“${subject}”展开。综合当前防御响应方案、区域风险评价和参会人员研判意见，重点关注高风险区域变化，并根据现场核查结果动态调整响应措施。`,
+    recommendations: [
+      "维持重点区域现有响应措施，持续关注高风险区域变化。",
+      "组织责任人开展现场核查，及时补充设备状态和现场反馈记录。",
+      "根据现场核查与风险变化动态调整响应等级，形成闭环处置记录。"
+    ],
+    responsibilities: ["请责任人反馈现场核查、设备状态和风险变化，并记录处置进展。"]
+  };
+}
+
+function sanitizeMeetingRecord(input = {}) {
+  const startedAt = input.startedAt || localMeetingContext?.startedAt || new Date().toISOString();
+  const meetingId = String(input.meetingId || input.id || localMeetingContext?.meetingId || localActiveMeetingId || `local-meeting-${Date.now()}`);
+  const participants = Array.isArray(input.participants) ? input.participants.map(String).slice(0, 100) : [...localMeetingParticipants];
+  const participantNames = Array.isArray(input.participantNames) ? input.participantNames.map(value => String(value).slice(0, 80)).slice(0, 100) : [];
+  const minutes = input.minutes && typeof input.minutes === "object" ? input.minutes : defaultMinutesForMeeting(input);
+  return {
+    id: String(input.id || meetingId),
+    meetingId,
+    subject: normalizeMeetingSubject(input.subject || localMeetingContext?.subject),
+    riskTopic: String(input.riskTopic || localMeetingContext?.riskTopic || input.subject || "地质灾害风险综合研判").replace(/\s+/g, " ").trim().slice(0, 160),
+    handleId: String(input.handleId || localMeetingContext?.handleId || "local-region-response"),
+    region: String(input.region || localMeetingContext?.region || "恩施市 · 芭蕉侗族乡").slice(0, 120),
+    responseLevel: String(input.responseLevel || localMeetingContext?.responseLevel || "Ⅱ级响应").slice(0, 40),
+    host: String(input.host || localMeetingContext?.host || "演示账号").slice(0, 80),
+    participants,
+    participantNames,
+    startedAt,
+    endedAt: input.endedAt || new Date().toISOString(),
+    durationMinutes: Math.max(0, Number(input.durationMinutes) || Math.round((Date.now() - Date.parse(startedAt)) / 60000) || 0),
+    status: String(input.status || "completed").slice(0, 32),
+    minutes: {
+      summary: String(minutes.summary || "").slice(0, 20000),
+      recommendations: Array.isArray(minutes.recommendations) ? minutes.recommendations.map(value => String(value).slice(0, 1000)).slice(0, 50) : [],
+      responsibilities: Array.isArray(minutes.responsibilities) ? minutes.responsibilities.map(value => String(value).slice(0, 1000)).slice(0, 50) : []
+    }
+  };
+}
+
+function upsertLocalMeetingRecord(input) {
+  const record = sanitizeMeetingRecord(input);
+  const index = localMeetingRecords.findIndex(item => item.id === record.id);
+  if (index >= 0) localMeetingRecords[index] = { ...localMeetingRecords[index], ...record };
+  else localMeetingRecords.unshift(record);
+  if (localMeetingRecords.length > 100) localMeetingRecords.length = 100;
+  return record;
+}
+
 async function streamDeepSeekAnswer(req, res, query, refs, history, messageId, conversationId) {
   const controller = new AbortController();
   const abort = () => controller.abort();
@@ -597,18 +658,83 @@ async function handleApi(req, res, url) {
     sendJson(res, { code: 200, data: rows, total });
     return;
   }
+  if (url.pathname === "/api/dizai/meeting/context" && req.method === "POST") {
+    const body = parseChatBody(await readBody(req));
+    const nextContext = {
+      subject: normalizeMeetingSubject(body.subject),
+      riskTopic: String(body.riskTopic || body.subject || "地质灾害风险综合研判").replace(/\s+/g, " ").trim().slice(0, 160),
+      handleId: String(body.handleId || localMeetingContext?.handleId || "local-region-response"),
+      region: String(body.region || localMeetingContext?.region || "恩施市 · 芭蕉侗族乡"),
+      responseLevel: String(body.responseLevel || localMeetingContext?.responseLevel || "Ⅱ级响应"),
+      host: String(body.host || localMeetingContext?.host || "演示账号"),
+      participants: [...localMeetingParticipants],
+      participantNames: typeof localExpertRows !== "undefined" ? localMeetingParticipants.map(userId => localExpertRows.find(row => String(row.userId) === String(userId))?.nickName).filter(Boolean) : []
+    };
+    if (localMeetingContext) localMeetingContext = { ...localMeetingContext, ...nextContext };
+    else localMeetingDraftContext = nextContext;
+    sendJson(res, { code: 200, data: localMeetingContext || localMeetingDraftContext });
+    return;
+  }
+  if (url.pathname === "/api/dizai/meeting/context" && req.method === "GET") {
+    sendJson(res, { code: 200, data: localMeetingContext || localMeetingDraftContext });
+    return;
+  }
+  if (url.pathname === "/api/dizai/meeting/currentContext") {
+    sendJson(res, { code: 200, data: localMeetingContext || localMeetingDraftContext });
+    return;
+  }
+  if (url.pathname === "/api/dizai/meeting/history" && req.method === "GET") {
+    const query = String(url.searchParams.get("q") || "").trim().toLowerCase();
+    const rows = query
+      ? localMeetingRecords.filter(item => `${item.subject} ${item.region} ${item.host}`.toLowerCase().includes(query))
+      : localMeetingRecords;
+    sendJson(res, { code: 200, data: rows, total: rows.length });
+    return;
+  }
+  if (url.pathname === "/api/dizai/meeting/history" && req.method === "POST") {
+    const body = parseChatBody(await readBody(req));
+    const record = upsertLocalMeetingRecord(body);
+    sendJson(res, { code: 200, data: record });
+    return;
+  }
+  if (url.pathname.startsWith("/api/dizai/meeting/history/") && req.method === "GET") {
+    const id = decodeURIComponent(url.pathname.slice("/api/dizai/meeting/history/".length));
+    const record = localMeetingRecords.find(item => item.id === id || item.meetingId === id) || null;
+    sendJson(res, record ? { code: 200, data: record } : { code: 404, message: "meeting record not found" }, record ? 200 : 404);
+    return;
+  }
   if (req.method === "POST" && url.pathname === "/api/dizai/meeting/startMeeting") {
     const body = parseChatBody(await readBody(req));
-    localActiveMeetingId = "local-meeting";
+    localActiveMeetingId = `local-meeting-${Date.now()}`;
     localMeetingParticipants = Array.isArray(body.participants)
       ? body.participants.filter(value => value !== null && value !== undefined).map(String)
       : [];
-    sendJson(res, { code: 200, data: { meetingId: localActiveMeetingId } });
+    localMeetingContext = {
+      meetingId: localActiveMeetingId,
+      subject: normalizeMeetingSubject(body.subject || localMeetingDraftContext?.subject),
+      riskTopic: String(body.riskTopic || localMeetingDraftContext?.riskTopic || body.subject || "地质灾害风险综合研判").replace(/\s+/g, " ").trim().slice(0, 160),
+      handleId: String(body.handleId || localMeetingDraftContext?.handleId || "local-region-response"),
+      region: String(body.region || localMeetingDraftContext?.region || "恩施市 · 芭蕉侗族乡"),
+      responseLevel: String(body.responseLevel || localMeetingDraftContext?.responseLevel || "Ⅱ级响应"),
+      host: String(body.host || localMeetingDraftContext?.host || "演示账号"),
+      participants: [...localMeetingParticipants],
+      participantNames: typeof localExpertRows !== "undefined" ? localMeetingParticipants.map(userId => localExpertRows.find(row => String(row.userId) === String(userId))?.nickName).filter(Boolean) : [],
+      startedAt: new Date().toISOString()
+    };
+    localMeetingDraftContext = null;
+    sendJson(res, { code: 200, data: { meetingId: localActiveMeetingId, context: localMeetingContext } });
     return;
   }
   if (req.method === "POST" && /^\/api\/dizai\/meeting\/(closeMeeting|exitMeeting)\//.test(url.pathname)) {
+    const isCloseMeeting = url.pathname.includes("/closeMeeting/");
+    if (isCloseMeeting && localMeetingContext) {
+      const existing = localMeetingRecords.find(item => item.meetingId === localMeetingContext.meetingId);
+      if (!existing) upsertLocalMeetingRecord({ ...localMeetingContext, status: "completed", minutes: defaultMinutesForMeeting(localMeetingContext) });
+    }
     localActiveMeetingId = "";
     localMeetingParticipants = [];
+    localMeetingDraftContext = null;
+    localMeetingContext = null;
     sendJson(res, { code: 200, data: true });
     return;
   }
@@ -633,7 +759,17 @@ async function handleApi(req, res, url) {
   if (url.pathname.startsWith("/api/dizai/meeting/getMeetingInfo/")) {
     sendJson(res, {
       code: 200,
-      data: { initiator: 1, handleId: "local-region-response", participantsMap: localParticipantsMap() }
+      data: {
+        initiator: 1,
+        handleId: localMeetingContext?.handleId || "local-region-response",
+        participantsMap: localParticipantsMap(),
+        participantNames: localMeetingContext?.participantNames || [],
+        subject: localMeetingContext?.subject || "",
+        riskTopic: localMeetingContext?.riskTopic || "",
+        region: localMeetingContext?.region || "恩施市 · 芭蕉侗族乡",
+        responseLevel: localMeetingContext?.responseLevel || "Ⅱ级响应",
+        startedAt: localMeetingContext?.startedAt || null
+      }
     });
     return;
   }
@@ -664,6 +800,7 @@ function aliasedFile(urlPath) {
   const aliases = [
     ["/assets/", path.join(root, "mirror-clean6", "assets")],
     ["/design-system/", path.join(root, "design-system")],
+    ["/meeting-feature/", path.join(root, "meeting-feature")],
     ["/MapResource/", path.join(root, "mirror-clean6", "MapResource")],
     ["/logo.png", path.join(root, "mirror-clean6", "logo.png")],
     ["/heatmap.min.js", path.join(root, "mirror-clean6", "heatmap.min.js")],
@@ -746,13 +883,15 @@ function proxySourceMapAsset(res, url) {
 async function serveStatic(req, res, url) {
   if (await serveLocalMapTile(res, url)) return;
   if (proxySourceMapAsset(res, url)) return;
-  let file = nativeRoutes.has(url.pathname) || url.pathname === "/native.html" ? path.join(root, "native.html") : (aliasedFile(url.pathname) || safeFile(url.pathname));
+  let file = url.pathname === "/meeting-history"
+    ? path.join(root, "meeting-feature", "history.html")
+    : (nativeRoutes.has(url.pathname) || url.pathname === "/native.html" ? path.join(root, "native.html") : (aliasedFile(url.pathname) || safeFile(url.pathname)));
   if (!file) return sendJson(res, { code: 400, message: "bad path" }, 400);
   try {
     const info = await stat(file);
     if (info.isDirectory()) file = path.join(file, "index.html");
   } catch {
-    const isAssetPath = ["/assets/", "/design-system/", "/MapResource/", "/lib/", "/video/"].some((prefix) => url.pathname.startsWith(prefix)) || ["/logo.png", "/heatmap.min.js", "/kriging.js"].includes(url.pathname);
+    const isAssetPath = ["/assets/", "/design-system/", "/meeting-feature/", "/MapResource/", "/lib/", "/video/"].some((prefix) => url.pathname.startsWith(prefix)) || ["/logo.png", "/heatmap.min.js", "/kriging.js"].includes(url.pathname);
     if (isAssetPath) {
       if (debugAssets) console.log(`static 404: ${url.pathname}`);
       return sendJson(res, { code: 404, message: "asset not found" }, 404);

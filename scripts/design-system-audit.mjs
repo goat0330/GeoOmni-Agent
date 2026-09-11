@@ -46,7 +46,7 @@ for (const file of await walk(root)) {
   const noComments = text.replace(/\/\*[\s\S]*?\*\//g, "");
   const rawColor = /#[0-9a-fA-F]{3,8}\b|\brgba?\s*\(|\bhsla?\s*\(/;
   const rawRadius = /border-radius\s*:\s*\d+(?:\.\d+)?px\b/;
-  const rawFont = /font-family\s*:\s*(?!var\()/;
+  const rawFont = /font-family\s*:\s*(?!\s*var\()/;
   if (rawColor.test(noComments)) errors.push(`${relative}: raw color detected; use --geo-* token`);
   if (rawRadius.test(noComments)) errors.push(`${relative}: raw border-radius detected; use --geo-radius-* token`);
   if (rawFont.test(noComments)) errors.push(`${relative}: raw font-family detected; use --geo-font-family or inherit`);

@@ -59,6 +59,15 @@ await check("heartbeat", "/api/dizai/online/heartbeat", {
 }, async (_response, text) => {
   if (JSON.parse(text).code !== 200) throw new Error("heartbeat contract mismatch");
 });
+await check("map tile", "/MapResource/Tianditu/10/822/420.jpg", {}, async (response) => {
+  if (!String(response.headers.get("content-type") || "").includes("image/jpeg")) throw new Error("WMTS tile is not JPEG");
+});
+await check("terrain", "/MapResource/enshi-dem-562/0/0/0.terrain", {}, async (response) => {
+  if (!String(response.headers.get("content-type") || "").includes("application/octet-stream")) throw new Error("terrain content type mismatch");
+});
+await check("terrain metadata", "/MapResource/enshi-dem-562/layer.json", {}, async (_response, text) => {
+  if (JSON.parse(text).format !== "quantized-mesh-1.0") throw new Error("terrain metadata mismatch");
+});
 await check("chat SSE", "/api/dizai/ai/agent/chat", {
   method: "POST",
   headers: { "Content-Type": "application/json" },

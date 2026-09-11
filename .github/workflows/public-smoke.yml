@@ -4,6 +4,12 @@ on:
   push:
     branches: [master]
   workflow_dispatch:
+    inputs:
+      require_deepseek:
+        description: "Require WORKFLOW_FINISHED source=deepseek"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -18,6 +24,7 @@ jobs:
     timeout-minutes: 10
     env:
       BASE_URL: ${{ vars.PUBLIC_BASE_URL || 'https://geo-omni-agent.onrender.com' }}
+      REQUIRE_DEEPSEEK: ${{ inputs.require_deepseek || 'false' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

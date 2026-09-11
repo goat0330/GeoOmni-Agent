@@ -364,13 +364,13 @@ function buildDeepSeekSystemPrompt(refs) {
   ].join("\n\n");
 }
 
-function sendWorkflowFinished(res, messageId, status = "succeeded", conversationId = "") {
+function sendWorkflowFinished(res, messageId, status = "succeeded", conversationId = "", source = "local-fallback") {
   writeSse(res, {
     eventType: "WORKFLOW_FINISHED",
     message_id: messageId,
     conversation_id: conversationId,
     answer: "",
-    data: { status }
+    data: { status, source }
   });
   finishSse(res);
 }
@@ -405,7 +405,7 @@ async function streamDeepSeekAnswer(req, res, query, refs, history, messageId, c
 
     if (!upstream.ok || !upstream.body) {
       writeSse(res, { eventType: "MESSAGE", message_id: messageId, answer: "</think>" });
-      sendWorkflowFinished(res, messageId, "failed", conversationId);
+      sendWorkflowFinished(res, messageId, "failed", conversationId, "deepseek-error");
       return;
     }
 
@@ -450,12 +450,12 @@ async function streamDeepSeekAnswer(req, res, query, refs, history, messageId, c
       closeThinking();
       writeSse(res, { eventType: "MESSAGE", message_id: messageId, answer: "模型未返回可显示内容。" });
     }
-    sendWorkflowFinished(res, messageId, "succeeded", conversationId);
+    sendWorkflowFinished(res, messageId, "succeeded", conversationId, "deepseek");
     return generatedAnswer;
   } catch (error) {
     if (!res.destroyed && error?.name !== "AbortError") {
       writeSse(res, { eventType: "MESSAGE", message_id: messageId, answer: "</think>" });
-      sendWorkflowFinished(res, messageId, "failed", conversationId);
+      sendWorkflowFinished(res, messageId, "failed", conversationId, "deepseek-error");
     }
     return "";
   } finally {
@@ -501,7 +501,7 @@ async function handleChat(req, res) {
     }
     const answer = buildLocalAnswer(query, refs);
     chatConversations.set(conversationId, { messages: [...history, { role: "user", content: query }, { role: "assistant", content: answer }].slice(-8) });
-    sendWorkflowFinished(res, messageId, "succeeded", conversationId);
+    sendWorkflowFinished(res, messageId, "succeeded", conversationId, "local-fallback");
     return;
   }
 

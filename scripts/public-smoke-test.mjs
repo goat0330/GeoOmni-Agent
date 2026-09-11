@@ -1,5 +1,6 @@
 const baseUrl = (process.env.BASE_URL || "").replace(/\/$/, "");
 if (!baseUrl) throw new Error("BASE_URL is required");
+const requireDeepSeek = /^(1|true|yes)$/i.test(process.env.REQUIRE_DEEPSEEK || "");
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -29,6 +30,12 @@ async function request(path, options = {}, attempts = 12) {
 }
 
 const passed = [];
+function parseWorkflowFinished(text) {
+  const line = text.split(/\r?\n/).find(item => item.startsWith("data:") && item.includes('"eventType":"WORKFLOW_FINISHED"'));
+  if (!line) return null;
+  try { return JSON.parse(line.slice(5).trim()); } catch { return null; }
+}
+
 const check = async (label, path, options = {}, validate = async () => {}) => {
   const response = await request(path, options);
   await validate(response, await response.text());
@@ -75,6 +82,11 @@ await check("chat SSE", "/api/dizai/ai/agent/chat", {
 }, async (response, text) => {
   if (!String(response.headers.get("content-type") || "").includes("text/event-stream")) throw new Error("chat is not SSE");
   if (!text.includes("WORKFLOW_FINISHED") || !text.includes("data: [DONE]")) throw new Error("SSE did not finish");
+  const workflow = parseWorkflowFinished(text);
+  const source = workflow?.data?.source;
+  if (requireDeepSeek && !source) throw new Error("SSE source is missing");
+  if (source && !["deepseek", "deepseek-error", "local-fallback"].includes(source)) throw new Error(`unknown SSE source: ${source}`);
+  if (requireDeepSeek && source !== "deepseek") throw new Error(`expected DeepSeek, received ${source}`);
 });
 
 console.log(`Public smoke PASS: ${passed.join(", ")}`);

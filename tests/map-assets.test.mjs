@@ -45,6 +45,11 @@ test("production serves bundled terrain before considering source proxy", async 
     assert.equal(terrain.headers.get("content-encoding"), "gzip");
     assert.ok((await terrain.arrayBuffer()).byteLength > 0);
 
+    const designReference = await fetch(`${base}/design-system/examples.html`);
+    assert.equal(designReference.status, 200);
+    assert.match(designReference.headers.get("content-type") || "", /text\/html/);
+    assert.match(await designReference.text(), /GeoOmni Design System/);
+
     for (const pathname of [
       "/serve.mjs",
       "/package.json",

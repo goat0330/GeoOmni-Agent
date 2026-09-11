@@ -14,6 +14,10 @@
     "test": "node --test tests/*.test.mjs",
     "smoke": "node scripts/smoke-test.mjs",
     "audit:static": "node scripts/static-audit.mjs",
-    "collect": "node tools/collect-assets.mjs mirror-clean3"
+    "collect": "node tools/collect-assets.mjs mirror-clean3",
+    "design:apply": "node tools/apply-design-system.mjs",
+    "design:check": "node tools/apply-design-system.mjs --check",
+    "design:audit": "node scripts/design-system-audit.mjs",
+    "design:test": "node --test tests/design-system.test.mjs"
   }
 }

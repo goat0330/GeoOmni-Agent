@@ -1,0 +1,37 @@
+GeoOmni-Agent Design System Overlay v1
+=======================================
+
+NEW FILES
+- design-system/DESIGN.md
+- design-system/COMPONENTS.md
+- design-system/tokens.css
+- design-system/base.css
+- design-system/primitives.css
+- design-system/patterns.css
+- design-system/theme-bridge.css
+- design-system/index.css
+- design-system/examples.html
+- templates/AGENTS.design-system.snippet.md
+- tools/apply-design-system.mjs
+- tools/rollback-design-system.mjs
+- scripts/design-system-audit.mjs
+- tests/design-system.test.mjs
+- install-design-system.ps1
+- rollback-design-system.ps1
+- README-DESIGN-SYSTEM.md
+
+INSTALLER PATCHES (idempotent + backed up)
+- index.html
+- native.html
+- package.json
+- AGENTS.md
+- .gitignore (adds only .design-system-backup/)
+
+UNCHANGED
+- serve.mjs
+- mirror-clean6/**
+- prototype.js
+- prototype.css
+- app.js
+- styles.css
+- existing API / RAG / DeepSeek / Render / Docker behavior

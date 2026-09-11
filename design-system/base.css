@@ -1,0 +1,57 @@
+/* GeoOmni Design System Base v1 */
+.geo-ui,
+#geo-smart-prototype {
+  color-scheme: light;
+  font-family: var(--geo-font-family);
+  font-size: var(--geo-font-size-md);
+  line-height: var(--geo-line-height-base);
+  color: var(--geo-text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.geo-ui *,
+.geo-ui *::before,
+.geo-ui *::after,
+#geo-smart-prototype *,
+#geo-smart-prototype *::before,
+#geo-smart-prototype *::after {
+  box-sizing: border-box;
+}
+
+.geo-ui button,
+.geo-ui input,
+.geo-ui textarea,
+.geo-ui select,
+#geo-smart-prototype button,
+#geo-smart-prototype input,
+#geo-smart-prototype textarea,
+#geo-smart-prototype select {
+  font: inherit;
+}
+
+.geo-ui button,
+#geo-smart-prototype button {
+  color: inherit;
+}
+
+.geo-ui input,
+.geo-ui textarea,
+.geo-ui select,
+#geo-smart-prototype input,
+#geo-smart-prototype textarea,
+#geo-smart-prototype select {
+  color-scheme: light;
+  color: var(--geo-text-regular);
+}
+
+.geo-ui :focus-visible,
+#geo-smart-prototype :focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--geo-color-primary) 55%, white);
+  outline-offset: 2px;
+}
+
+.geo-ui [hidden],
+#geo-smart-prototype[hidden] {
+  display: none !important;
+}

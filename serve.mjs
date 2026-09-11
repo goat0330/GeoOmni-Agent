@@ -586,6 +586,7 @@ function aliasedFile(urlPath) {
   const decoded = decodeURIComponent(urlPath.split("?")[0]);
   const aliases = [
     ["/assets/", path.join(root, "mirror-clean6", "assets")],
+    ["/design-system/", path.join(root, "design-system")],
     ["/MapResource/", path.join(root, "mirror-clean6", "MapResource")],
     ["/logo.png", path.join(root, "mirror-clean6", "logo.png")],
     ["/heatmap.min.js", path.join(root, "mirror-clean6", "heatmap.min.js")],
@@ -674,7 +675,7 @@ async function serveStatic(req, res, url) {
     const info = await stat(file);
     if (info.isDirectory()) file = path.join(file, "index.html");
   } catch {
-    const isAssetPath = ["/assets/", "/MapResource/", "/lib/", "/video/"].some((prefix) => url.pathname.startsWith(prefix)) || ["/logo.png", "/heatmap.min.js", "/kriging.js"].includes(url.pathname);
+    const isAssetPath = ["/assets/", "/design-system/", "/MapResource/", "/lib/", "/video/"].some((prefix) => url.pathname.startsWith(prefix)) || ["/logo.png", "/heatmap.min.js", "/kriging.js"].includes(url.pathname);
     if (isAssetPath) {
       if (debugAssets) console.log(`static 404: ${url.pathname}`);
       return sendJson(res, { code: 404, message: "asset not found" }, 404);

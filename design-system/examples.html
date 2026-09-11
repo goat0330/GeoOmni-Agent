@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoOmni Design System</title>
+  <link rel="stylesheet" href="/design-system/index.css" />
+  <style>
+    body { margin: 0; background: var(--geo-bg-page); }
+    .demo-shell { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 32px 0 64px; }
+    .demo-head { margin-bottom: 24px; }
+    .demo-head h1 { margin: 0; color: var(--geo-text-primary); font: 600 24px/1.35 var(--geo-font-family); }
+    .demo-head p { margin: 8px 0 0; color: var(--geo-text-secondary); }
+    .demo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .demo-block { padding: 20px; }
+    .demo-block h2 { margin: 0 0 16px; color: var(--geo-text-strong); font-size: 16px; }
+    .demo-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .demo-stack { display: grid; gap: 12px; }
+    .demo-colors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .swatch { overflow: hidden; border: 1px solid var(--geo-border-light); border-radius: var(--geo-radius-md); background: var(--geo-bg-surface); }
+    .swatch i { display: block; height: 42px; }
+    .swatch span { display: block; padding: 8px; color: var(--geo-text-secondary); font-size: 12px; }
+    .dialog-demo { grid-column: 1 / -1; min-height: 590px; position: relative; overflow: hidden; }
+    .dialog-demo .geo-ui-backdrop { position: absolute; }
+    @media (max-width: 800px) { .demo-grid { grid-template-columns: 1fr; } .demo-colors { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body class="geo-ui">
+  <main class="demo-shell">
+    <header class="demo-head">
+      <h1>GeoOmni Design System</h1>
+      <p>从原始 Element Plus light 基线与现有 GeoOmni 业务组件提取的可复用 UI Golden Reference。</p>
+    </header>
+
+    <div class="demo-grid">
+      <section class="geo-ui-card demo-block">
+        <h2>Color semantics</h2>
+        <div class="demo-colors">
+          <div class="swatch"><i style="background:var(--geo-color-primary)"></i><span>Primary</span></div>
+          <div class="swatch"><i style="background:var(--geo-bg-surface)"></i><span>Surface</span></div>
+          <div class="swatch"><i style="background:var(--geo-bg-subtle)"></i><span>Subtle</span></div>
+          <div class="swatch"><i style="background:var(--geo-color-success)"></i><span>Success</span></div>
+        </div>
+      </section>
+
+      <section class="geo-ui-card demo-block">
+        <h2>Buttons & tags</h2>
+        <div class="demo-stack">
+          <div class="demo-row">
+            <button class="geo-ui-button geo-ui-button--primary">确认发送</button>
+            <button class="geo-ui-button">取消</button>
+            <button class="geo-ui-button geo-ui-button--secondary">编辑纪要</button>
+            <button class="geo-ui-button geo-ui-button--text">查看详情</button>
+          </div>
+          <div class="demo-row">
+            <span class="geo-ui-tag geo-ui-tag--primary">待研判</span>
+            <span class="geo-ui-tag geo-ui-tag--success">在线</span>
+            <span class="geo-ui-tag geo-ui-tag--warning">待落实</span>
+            <span class="geo-ui-tag geo-ui-tag--danger">高风险</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="geo-ui-card demo-block">
+        <h2>Form controls</h2>
+        <div class="demo-stack">
+          <label class="geo-ui-field"><span class="geo-ui-label">会商主题</span><input class="geo-ui-input" value="芭蕉侗族乡风险会商" /></label>
+          <label class="geo-ui-field"><span class="geo-ui-label">附言</span><textarea class="geo-ui-textarea">请结合本次会商纪要，落实风险研判及处置建议，并及时反馈现场进展。</textarea><small class="geo-ui-help">内容会随责任事项一起发送。</small></label>
+        </div>
+      </section>
+
+      <section class="geo-ui-card demo-block">
+        <h2>Tabs & list</h2>
+        <div class="demo-stack">
+          <div class="geo-ui-tabs"><button class="geo-ui-tab is-active">政府人员</button><button class="geo-ui-tab">专家</button></div>
+          <div class="geo-ui-list">
+            <div class="geo-ui-list-row"><span class="geo-ui-avatar geo-ui-avatar--sm">政</span><div style="flex:1"><strong>乡镇联络员 A</strong><div class="geo-ui-help">分管乡长 · 芭蕉侗族乡人民政府</div></div><span class="geo-ui-status geo-ui-status--online">在线</span></div>
+            <div class="geo-ui-list-row"><span class="geo-ui-avatar geo-ui-avatar--sm">专</span><div style="flex:1"><strong>地灾专家 A</strong><div class="geo-ui-help">地质灾害技术支撑</div></div><span class="geo-ui-status">离线</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="geo-ui-card dialog-demo">
+        <div class="geo-ui-backdrop">
+          <div class="geo-ui-dialog geo-ui-dialog--compact" role="dialog" aria-modal="true" aria-labelledby="demo-dialog-title">
+            <header class="geo-ui-dialog__header">
+              <div class="geo-ui-dialog__heading"><h2 class="geo-ui-dialog__title" id="demo-dialog-title">发送给责任人</h2><p class="geo-ui-dialog__subtitle">选择需要吸收本次会商结论的人员</p></div>
+              <button class="geo-ui-dialog__close" aria-label="关闭">×</button>
+            </header>
+            <div class="geo-ui-dialog__body">
+              <div class="geo-pattern-recipient-picker">
+                <div class="geo-ui-tabs geo-pattern-recipient-picker__tabs"><button class="geo-ui-tab is-active">政府人员</button><button class="geo-ui-tab">专家</button></div>
+                <div class="geo-pattern-recipient-list">
+                  <label class="geo-pattern-recipient"><input class="geo-ui-checkbox" type="checkbox" /><span class="geo-ui-avatar">政</span><span class="geo-pattern-recipient__content"><span class="geo-pattern-recipient__name">乡镇联络员 A</span><span class="geo-pattern-recipient__meta">分管乡长 · 芭蕉侗族乡人民政府</span></span><span class="geo-pattern-recipient__online">在线</span></label>
+                  <label class="geo-pattern-recipient"><input class="geo-ui-checkbox" type="checkbox" /><span class="geo-ui-avatar">政</span><span class="geo-pattern-recipient__content"><span class="geo-pattern-recipient__name">县级联络员 A</span><span class="geo-pattern-recipient__meta">分管县长 · 恩施市人民政府</span></span><span class="geo-pattern-recipient__online">在线</span></label>
+                </div>
+                <label class="geo-ui-field"><span class="geo-ui-label">附言</span><textarea class="geo-ui-textarea">请结合本次会商纪要，落实风险研判及处置建议，并及时反馈现场进展。</textarea></label>
+                <div class="geo-pattern-recipient-picker__selection"><span>已选择 0 人</span></div>
+              </div>
+            </div>
+            <footer class="geo-ui-dialog__footer"><button class="geo-ui-button">取消</button><button class="geo-ui-button geo-ui-button--primary">确认发送</button></footer>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

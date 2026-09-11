@@ -29,3 +29,6 @@ serve.mjs.pre-enterprise.bak
 .enterprise-backup/
 
 .enterprise-local.json
+
+# GeoOmni Design System local backup
+.design-system-backup/

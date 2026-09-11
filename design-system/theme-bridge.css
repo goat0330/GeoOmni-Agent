@@ -1,0 +1,59 @@
+/* GeoOmni Theme Bridge v1
+ * Purpose: keep new custom UI light and visually aligned without changing the original
+ * compiled Element Plus application globally.
+ */
+.geo-ui,
+#geo-smart-prototype {
+  --geo-el-primary: var(--el-color-primary, #409eff);
+  --geo-el-text-primary: var(--el-text-color-primary, #303133);
+  --geo-el-text-regular: var(--el-text-color-regular, #606266);
+  --geo-el-text-secondary: var(--el-text-color-secondary, #909399);
+  --geo-el-border: var(--el-border-color, #dcdfe6);
+  --geo-el-fill-light: var(--el-fill-color-light, #f5f7fa);
+  --geo-el-surface: var(--el-bg-color, #ffffff);
+}
+
+/* Existing prototype root: neutralize inherited dark page/control behavior. */
+#geo-smart-prototype,
+#geo-smart-prototype .geo-prototype-modal,
+#geo-smart-prototype .geo-prototype-join-dialog,
+#geo-smart-prototype .geo-prototype-send-dialog {
+  color-scheme: light;
+}
+
+#geo-smart-prototype button,
+#geo-smart-prototype input,
+#geo-smart-prototype textarea,
+#geo-smart-prototype select {
+  font-family: var(--geo-font-family);
+}
+
+/* Normalize the current recipient dialog to extracted semantic tokens.
+ * !important is intentionally limited to the legacy bridge; new UI must use primitives.
+ */
+#geo-smart-prototype .geo-prototype-send-dialog {
+  border-color: var(--geo-border-light) !important;
+  border-radius: var(--geo-radius-dialog) !important;
+  background: var(--geo-bg-surface) !important;
+  box-shadow: var(--geo-shadow-dialog) !important;
+  color: var(--geo-text-primary) !important;
+}
+
+#geo-smart-prototype .geo-prototype-recipient-tabs {
+  border-radius: var(--geo-radius-md) !important;
+  background: var(--geo-bg-muted) !important;
+}
+
+#geo-smart-prototype .geo-prototype-recipient-list {
+  border-color: var(--geo-border-light) !important;
+  border-radius: var(--geo-radius-lg) !important;
+  background: var(--geo-bg-surface) !important;
+}
+
+#geo-smart-prototype .geo-prototype-message-field textarea,
+#geo-smart-prototype .geo-prototype-minutes-editor textarea {
+  border-color: var(--geo-border-field) !important;
+  border-radius: var(--geo-radius-md) !important;
+  background: var(--geo-bg-surface) !important;
+  color: var(--geo-text-regular) !important;
+}

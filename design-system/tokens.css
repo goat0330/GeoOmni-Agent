@@ -1,0 +1,101 @@
+/* GeoOmni Design System Tokens v1
+ * Extracted from the repository's Element Plus compiled theme and GeoOmni prototype layer.
+ * New feature CSS should consume --geo-* variables rather than hard-coded visual values.
+ */
+:root {
+  /* Typography: preserve the existing Chinese UI stack. */
+  --geo-font-family: AlibabaPuHuiTi, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --geo-font-size-xs: 12px;
+  --geo-font-size-sm: 13px;
+  --geo-font-size-md: 14px;
+  --geo-font-size-lg: 16px;
+  --geo-font-size-xl: 18px;
+  --geo-font-size-2xl: 20px;
+  --geo-font-weight-regular: 400;
+  --geo-font-weight-medium: 500;
+  --geo-font-weight-semibold: 600;
+  --geo-line-height-tight: 1.35;
+  --geo-line-height-base: 1.5;
+  --geo-line-height-relaxed: 1.65;
+
+  /* Brand / status. GeoOmni custom actions use a slightly deeper blue than Element Plus. */
+  --geo-color-primary: #3561fa;
+  --geo-color-primary-hover: #315ce0;
+  --geo-color-primary-active: #294fc9;
+  --geo-color-primary-soft: #eef3ff;
+  --geo-color-primary-border: #cddcff;
+  --geo-color-success: #38a168;
+  --geo-color-success-soft: #eef8f2;
+  --geo-color-warning: #e6a23c;
+  --geo-color-warning-soft: #fff5e7;
+  --geo-color-danger: #f56c6c;
+  --geo-color-danger-soft: #fff3f2;
+  --geo-color-info: #7f8a9c;
+
+  /* Surfaces: align to Element Plus light defaults. */
+  --geo-bg-page: var(--el-bg-color-page, #f2f3f5);
+  --geo-bg-surface: var(--el-bg-color, #ffffff);
+  --geo-bg-overlay: var(--el-bg-color-overlay, #ffffff);
+  --geo-bg-subtle: var(--el-fill-color-light, #f5f7fa);
+  --geo-bg-muted: #f4f6f9;
+  --geo-bg-selected: #f5f8ff;
+
+  /* Text: GeoOmni overlays are slightly blue-grey while preserving Element Plus hierarchy. */
+  --geo-text-primary: #27364a;
+  --geo-text-strong: #344157;
+  --geo-text-regular: #455165;
+  --geo-text-secondary: #7f8a9c;
+  --geo-text-tertiary: #8994a5;
+  --geo-text-placeholder: var(--el-text-color-placeholder, #a8abb2);
+  --geo-text-disabled: var(--el-text-color-disabled, #c0c4cc);
+  --geo-text-on-primary: #ffffff;
+
+  /* Borders. */
+  --geo-border-color: var(--el-border-color, #dcdfe6);
+  --geo-border-light: #e3e7ee;
+  --geo-border-lighter: var(--el-border-color-lighter, #ebeef5);
+  --geo-border-field: #dde2ea;
+  --geo-divider: #edf1f6;
+
+  /* Radius: keep new custom UI compact; do not globally override Element Plus radius. */
+  --geo-radius-xs: 4px;
+  --geo-radius-sm: 6px;
+  --geo-radius-md: 8px;
+  --geo-radius-lg: 9px;
+  --geo-radius-card: 10px;
+  --geo-radius-dialog: 12px;
+  --geo-radius-round: 20px;
+  --geo-radius-circle: 999px;
+
+  /* Spacing: 4px base grid. */
+  --geo-space-1: 4px;
+  --geo-space-2: 8px;
+  --geo-space-3: 12px;
+  --geo-space-4: 16px;
+  --geo-space-5: 20px;
+  --geo-space-6: 24px;
+  --geo-space-7: 28px;
+  --geo-space-8: 32px;
+
+  /* Control dimensions. */
+  --geo-control-height-sm: 32px;
+  --geo-control-height-md: 36px;
+  --geo-control-height-lg: 40px;
+  --geo-dialog-header-height: 64px;
+  --geo-dialog-footer-height: 60px;
+
+  /* Elevation / overlay. */
+  --geo-shadow-card: 0 8px 24px rgba(39, 55, 77, 0.08);
+  --geo-shadow-dialog: 0 16px 48px rgba(39, 55, 77, 0.20);
+  --geo-overlay-color: rgba(29, 43, 58, 0.50);
+
+  /* Motion. */
+  --geo-duration-fast: 120ms;
+  --geo-duration-base: 160ms;
+  --geo-ease-standard: ease;
+
+  /* Layering below Element Plus popper's 2000 only for in-page primitives;
+     dialogs deliberately sit above the compiled application. */
+  --geo-z-dialog: 10000;
+  --geo-z-toast: 10100;
+}

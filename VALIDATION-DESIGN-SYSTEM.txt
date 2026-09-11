@@ -1,0 +1,48 @@
+GeoOmni-Agent Design System Overlay v1 - Validation
+====================================================
+Date: 2026-09-11
+Repository: goat0330/GeoOmni-Agent
+Baseline checked: master @ 84194255b1bfe65ae95d6e43ca845eb931cc891d
+
+Extraction sources
+- mirror-clean6/assets/index-B1RU7MSh.css: Element Plus light foundation
+  - base font size 14px
+  - type scale 12/13/14/16/18/20px
+  - base background #fff / page #f2f3f5
+  - primary #409eff
+  - primary/regular/secondary text #303133/#606266/#909399
+  - border #dcdfe6, light fill #f5f7fa
+  - base radius 4px
+- prototype.css: GeoOmni product semantic layer
+  - custom primary blue around #3561fa / #416ef3
+  - blue-grey typography around #27364a/#455165/#7f8a9c
+  - white surfaces, subtle #f4f6f9/#f5f7fa fills
+  - compact 6-10px controls/cards and 12px recipient dialog
+  - recipient/dialog shadow normalized to 0 16px 48px rgba(39,55,77,.20)
+- styles.css: identified as legacy global dark theme; intentionally not used as new-feature foundation.
+
+Safety / integration rules
+- Does NOT edit mirror-clean6 compiled assets.
+- Does NOT edit serve.mjs, API, RAG, DeepSeek, Render or Docker behavior.
+- Design System is scoped to .geo-ui and #geo-smart-prototype.
+- Does NOT globally override Element Plus --el-* variables.
+- index.html/native.html only receive one stylesheet link after compiled app CSS.
+- package.json receives only four design:* scripts.
+- AGENTS.md is created/appended idempotently.
+- .gitignore only receives .design-system-backup/.
+
+Validation results
+- Node syntax check (all generated .mjs): PASS
+- Installer against current repo-shaped index/native/package anchors: PASS
+- Installer check mode: PASS
+- Idempotency (second install byte-stable): PASS
+- Windows CRLF compatibility: PASS
+- Design tests: 5/5 PASS
+- Design audit: PASS
+- Negative audit (raw hard-coded color/radius rejected): PASS
+- Positive audit (tokenized feature CSS accepted): PASS
+- CSS brace balance: PASS
+- Rollback to pre-install index/native/package/.gitignore and absent AGENTS state: PASS
+
+Golden reference after installation
+http://127.0.0.1:4173/design-system/examples.html

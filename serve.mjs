@@ -60,6 +60,29 @@ const localTownRows = [
   "白果乡", "盛家坝镇", "芭蕉侗族乡", "太阳河乡", "沐抚办事处", "舞阳坝街道", "沙地乡"
 ].map(streets => ({ streets, level: null, geoAdviceLevel: null }));
 
+const localExpertRoles = [
+  { key: "dz_zj", label: "专家", count: 36, deptName: "地质灾害防治技术中心" },
+  { key: "dz_fgxiangzhang", label: "分管乡长", count: 12, deptName: "乡镇人民政府" },
+  { key: "dz_fgxianzhang", label: "分管县长", count: 6, deptName: "县人民政府" },
+  { key: "dz_zgjld", label: "县自规局领导", count: 4, deptName: "县自然资源和规划局" },
+  { key: "dz_zgssz", label: "乡自规所所长", count: 8, deptName: "乡自然资源所" }
+];
+let localExpertSequence = 200000;
+const localExpertRows = localExpertRoles.flatMap(role => Array.from({ length: role.count }, (_, index) => ({
+  userId: localExpertSequence++,
+  nickName: `${role.label}席位 ${String(index + 1).padStart(2, "0")}`,
+  deptName: role.deptName,
+  matchedRoleKeys: role.key,
+  matchedRoleNames: role.label,
+  phonenumber: `135****${String(index + 1).padStart(4, "0")}`,
+  meetingCount: index % 28,
+  expertType: role.key === "dz_zj" ? 2 : 0,
+  online: 0
+})));
+
+let localActiveMeetingId = "";
+let localMeetingParticipants = [];
+
 const localPlanContent = String.raw`<h2>气象预警类区域防御响应方案</h2>
 <h3>一、基本信息</h3>
 <ul>
@@ -179,7 +202,7 @@ const jsonData = {
     code: 200,
     data: { id: "local-region-response", type: 2, planContent: localPlanContent, planContentJson: localPlanContentJson }
   },
-  "/api/dizai/defRespPlan/getStatus": { code: 200, data: true },
+  "/api/dizai/defRespPlan/getStatus": { code: 200, data: false },
   "/api/dizai/defRespPlan/childGeoAdvice": { code: 200, data: localTownRows },
   "/api/dizai/defRespPlan/streetGeoAdvice": { code: 200, data: localTownRows },
   "/api/dizai/common/dzCache/query": { code: 200, data: false },
@@ -375,6 +398,27 @@ function sendWorkflowFinished(res, messageId, status = "succeeded", conversation
   finishSse(res);
 }
 
+function localExpertRowsForRequest(url) {
+  const requestedRoleKeys = [...url.searchParams.entries()]
+    .filter(([key]) => /^roleKeys(?:\[\d*\])?$/.test(key))
+    .flatMap(([, value]) => value.split(","))
+    .filter(Boolean);
+  const query = String(url.searchParams.get("nickName") || "").trim().toLowerCase();
+  const pageNum = Math.max(1, Number(url.searchParams.get("pageNum")) || 1);
+  const pageSize = Math.max(1, Number(url.searchParams.get("pageSize")) || 10);
+  const filtered = localExpertRows.filter(row => {
+    const roleMatches = !requestedRoleKeys.length || requestedRoleKeys.includes(row.matchedRoleKeys);
+    const queryMatches = !query || `${row.nickName} ${row.deptName}`.toLowerCase().includes(query);
+    return roleMatches && queryMatches;
+  });
+  const start = (pageNum - 1) * pageSize;
+  return { rows: filtered.slice(start, start + pageSize), total: filtered.length };
+}
+
+function localParticipantsMap() {
+  return Object.fromEntries(localMeetingParticipants.map(userId => [String(userId), { userId }]));
+}
+
 async function streamDeepSeekAnswer(req, res, query, refs, history, messageId, conversationId) {
   const controller = new AbortController();
   const abort = () => controller.abort();
@@ -549,15 +593,48 @@ async function handleApi(req, res, url) {
     return;
   }
   if (url.pathname === "/api/dizai/role/expert") {
-    sendJson(res, { code: 200, data: [] });
+    const { rows, total } = localExpertRowsForRequest(url);
+    sendJson(res, { code: 200, data: rows, total });
+    return;
+  }
+  if (req.method === "POST" && url.pathname === "/api/dizai/meeting/startMeeting") {
+    const body = parseChatBody(await readBody(req));
+    localActiveMeetingId = "local-meeting";
+    localMeetingParticipants = Array.isArray(body.participants)
+      ? body.participants.filter(value => value !== null && value !== undefined).map(String)
+      : [];
+    sendJson(res, { code: 200, data: { meetingId: localActiveMeetingId } });
+    return;
+  }
+  if (req.method === "POST" && /^\/api\/dizai\/meeting\/(closeMeeting|exitMeeting)\//.test(url.pathname)) {
+    localActiveMeetingId = "";
+    localMeetingParticipants = [];
+    sendJson(res, { code: 200, data: true });
+    return;
+  }
+  if (req.method === "POST" && url.pathname === "/api/dizai/meeting/addParticipants") {
+    const body = parseChatBody(await readBody(req));
+    const ids = Array.isArray(body.userIds) ? body.userIds.map(String) : [];
+    localMeetingParticipants = [...new Set([...localMeetingParticipants, ...ids])];
+    sendJson(res, { code: 200, data: true });
+    return;
+  }
+  if (req.method === "POST" && url.pathname === "/api/dizai/meeting/removeParticipants") {
+    const body = parseChatBody(await readBody(req));
+    const ids = new Set(Array.isArray(body.userIds) ? body.userIds.map(String) : []);
+    localMeetingParticipants = localMeetingParticipants.filter(userId => !ids.has(String(userId)));
+    sendJson(res, { code: 200, data: true });
     return;
   }
   if (url.pathname.startsWith("/api/dizai/meeting/getMeetingId/")) {
-    sendJson(res, { code: 200, data: "local-meeting" });
+    sendJson(res, { code: 200, data: localActiveMeetingId || null });
     return;
   }
   if (url.pathname.startsWith("/api/dizai/meeting/getMeetingInfo/")) {
-    sendJson(res, { code: 200, data: { initiator: 1, handleId: "local-region-response", participantsMap: {} } });
+    sendJson(res, {
+      code: 200,
+      data: { initiator: 1, handleId: "local-region-response", participantsMap: localParticipantsMap() }
+    });
     return;
   }
   if (url.pathname.startsWith("/api/dizai/meeting/")) {

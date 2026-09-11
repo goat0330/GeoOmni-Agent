@@ -14,7 +14,9 @@ async function walk(dir) {
       const before = await fs.readFile(file, "utf8");
       const after = before
         .replace(/eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g, () => { replacements += 1; return "REDACTED_JWT"; })
-        .replace(/([?&]tk=)[A-Za-z0-9_-]{12,}/g, (_, prefix) => { replacements += 1; return `${prefix}REDACTED_MAP_TOKEN`; });
+        .replace(/([?&]tk=)[A-Za-z0-9_-]{12,}/g, (_, prefix) => { replacements += 1; return `${prefix}REDACTED_MAP_TOKEN`; })
+        .replace(/https:\/\/172\.16\.41\.60(?::\d+)?/g, () => { replacements += 1; return "/api/local-source"; })
+        .replace(/Bearer\s+dataset-[A-Za-z0-9_-]+/g, () => { replacements += 1; return "Bearer REDACTED_DATASET_TOKEN"; });
       if (after !== before) {
         await fs.writeFile(file, after, "utf8");
         changed += 1;
